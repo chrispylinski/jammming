@@ -3,6 +3,7 @@ import './App.css';
 import SearchBar from '../SearchBar/SearchBar';
 import SearchResults from '../SearchResults/SearchResults';
 import Playlist from '../Playlist/Playlist';
+import Spotify from '../../util/Spotify';
 
 /*
 State 
@@ -19,38 +20,15 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = { 
-      searchResults: [
-        {
-          name: 'Chris',
-          artist: 'd',
-          album: 'd',
-          id: '1'
-        },
-        {
-          name: 'Mayra',
-          artist: 'm',
-          album: 'm',
-          id: '2'
-        }
-      ], 
-      playlistName: 'my Tunes',
-      playlistTracks: [
-        {
-          name: 'm',
-          artist: 'm',
-          album: 'album',
-          id: '3'
-        },
-        {
-          name: 'name',
-          artist: 'nameless',
-          album: 'album',
-          id: '4'
-        }
-      ]
+      searchResults: [ ], 
+      playlistName: 'New Playlist',
+      playlistTracks: [ ]
     };
     this.addTrack = this.addTrack.bind(this); // to bind current value
     this.removeTrack = this.removeTrack.bind(this); // to bind current value
+    this.updatePlaylistName = this.updatePlaylistName.bind(this);
+    this.savePlaylist = this.savePlaylist.bind(this);
+    this.search = this.search.bind(this);
   }
 
   addTrack(track) {
@@ -71,16 +49,40 @@ class App extends Component {
     playlist.splice(indexOfselectedTrack, 1); // remove the selected track
     this.setState( {playlistTracks: playlist} );
   }
+
+  updatePlaylistName(name) {
+    this.setState({ playlistName: name });
+  }
+
+  savePlaylist() {
+    let trackURIs = this.state.playlistTracks.map(x => x.URI);  // URI is missing in playlistTracks array of track objects
+    Spotify.savePlayList(this.state.playlistName, trackURIs).then(
+      this.setState({
+        playlistName: 'new playlist',
+        tracks: [ ]
+      })
+    );
+  }
+
+  search(searchTerm) {
+    Spotify.search(searchTerm).then(
+      tracks => this.setState({
+        searchResults: tracks
+      })
+    );
+    console.log(searchTerm);
+  }
   
   render() {
     return (
       <div>
         <h1>Ja<span className="highlight">mmm</span>ing</h1>
         <div className="App">
-          <SearchBar />
+          <SearchBar onSearch={this.search} />
           <div className="App-playlist">
-            <SearchResults searchResults={this.state.searchResults} onAdd={this.addTrack}/>
-            <Playlist playlistName={this.state.playlistName} playlistTracks={this.state.playlistTracks} onRemove={this.removeTrack}/>
+            <SearchResults searchResults={this.state.searchResults} onAdd={this.addTrack} />
+            <Playlist playlistName={this.state.playlistName} playlistTracks={this.state.playlistTracks} 
+                      onRemove={this.removeTrack} onNameChange={this.updatePlaylistName} onSave={this.savePlaylist} />
           </div>
         </div>
       </div>
